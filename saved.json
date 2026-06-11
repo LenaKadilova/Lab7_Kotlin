@@ -1,0 +1,88 @@
+{
+  "30": {
+    "id": 1,
+    "name": "Shadow",
+    "coordinates": {
+      "x": 3.1,
+      "y": 7
+    },
+    "creationDate": "2026-03-05T22:43",
+    "age": 120,
+    "weight": 300.2,
+    "type": "UNDERGROUND",
+    "character": "CHAOTIC",
+    "head": {
+      "eyesCount": 3,
+      "toothCount": 60.0
+    }
+  },
+  "5": {
+    "id": 2,
+    "name": "sdfs",
+    "coordinates": {
+      "x": 5.0,
+      "y": 67
+    },
+    "creationDate": "2026-03-06T22:08:42.964931500",
+    "age": 57,
+    "weight": 54.0,
+    "type": "WATER",
+    "character": "CHAOTIC"
+  },
+  "2": {
+    "id": 3,
+    "name": "ueueu",
+    "coordinates": {
+      "x": 1.0,
+      "y": 2
+    },
+    "creationDate": "2026-03-05T22:42",
+    "age": 50,
+    "weight": 150.0,
+    "type": "AIR",
+    "character": "GOOD"
+  },
+  "45": {
+    "id": 6,
+    "name": "reg",
+    "coordinates": {
+      "x": 3.0,
+      "y": 5
+    },
+    "creationDate": "2026-03-07T13:50:57.408308700",
+    "age": 45,
+    "weight": 54.0,
+    "type": "WATER",
+    "character": "GOOD"
+  },
+  "56": {
+    "id": 5,
+    "name": "4",
+    "coordinates": {
+      "x": 43.0,
+      "y": 4
+    },
+    "creationDate": "2026-03-06T20:39:23.296096600",
+    "age": 3,
+    "weight": 4.0,
+    "type": "AIR",
+    "character": "GOOD",
+    "head": {
+      "eyesCount": 8,
+      "toothCount": 8.0
+    }
+  },
+  "67": {
+    "id": 4,
+    "name": "ghjk",
+    "coordinates": {
+      "x": 7.0,
+      "y": 689
+    },
+    "creationDate": "2026-03-06T23:03:52.495944400",
+    "age": 79,
+    "weight": 6686.0,
+    "type": "AIR",
+    "character": "GOOD"
+  }
+}

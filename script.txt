@@ -1,0 +1,67 @@
+help
+info
+insert 1
+DragonFire
+101
+20
+200
+75.0
+fire
+fickle
+yes
+4
+44
+insert 21
+Smaug
+102
+15
+25
+180
+water
+wise
+no
+insert 3
+Drogon
+103
+12
+18
+220
+air
+good
+yes
+2
+28
+show
+update 1
+DragonFire
+101
+20
+200
+76.0
+fire
+fickle
+yes
+4
+43
+remove_greater_key 2
+filter_starts_with_name Dra
+group_counting_by_id
+remove_greater age 190
+insert 3
+Drogone
+103
+12
+18
+220
+air
+good
+yes
+2
+28
+remove_key 3
+replace_if_greater 2 weight 12
+print_ascending x
+execute_script another_script.txt
+execute_script script.txt
+clear
+exit
