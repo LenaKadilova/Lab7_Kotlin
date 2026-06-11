@@ -55,6 +55,6 @@ fun main(args: Array<String>) {
     commandManager.addToList(ReplaceIfGreaterCommand(collectionManager))
     commandManager.addToList(ExitCommand())
 
-    val server = Server(collectionManager, commandManager)
+    val server = Server(commandManager)
     server.start()
 }

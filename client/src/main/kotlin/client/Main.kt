@@ -5,10 +5,11 @@ import common.Request
 fun main() {
     System.setOut(java.io.PrintStream(System.out, true, "UTF-8"))
     val io = IOManager()
-    val client = Client("172.20.10.13", 12345, io)
+    val client = Client("localhost", 12345, io)
     val executingScripts = mutableSetOf<String>()
     val commandsRequiringDragon = mutableSetOf<String>()
 
+    client.send(Request("help", null, null))
     io.println("Клиент запущен. Введите команду:")
 
     while (true) {
@@ -64,7 +65,10 @@ fun main() {
             io.println(response.message)
             response.lines?.forEach { line -> io.println(line) }
 
-            if (response.exitClient) return
+            if (response.exitClient) {
+                client.close()
+                return
+            }
         }
     }
 }

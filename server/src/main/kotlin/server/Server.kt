@@ -2,62 +2,56 @@ package server
 
 import common.Request
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.InetSocketAddress
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
-import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
+import java.nio.ByteBuffer
+import java.nio.channels.DatagramChannel
 
-class Server(collectionManager: CollectionManager, private val commandManager: CommandManager) {
+class Server(private val commandManager: CommandManager) {
 
     private val logger = LoggerFactory.getLogger(Server::class.java)
+    private val knownClients = mutableSetOf<String>()
 
     fun start() {
-        val selector = Selector.open()
-        val serverChannel = ServerSocketChannel.open()
-        serverChannel.bind(InetSocketAddress(12345))
-        serverChannel.configureBlocking(false)
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT)
+        val channel = DatagramChannel.open()
+        channel.bind(InetSocketAddress(12345))
         logger.info("Сервер запущен на порту 12345")
 
+        val buffer = ByteBuffer.allocate(65535)
+
         while (true) {
-            selector.select()
-            val keys = selector.selectedKeys().iterator()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                keys.remove()
-                when {
-                    key.isAcceptable -> {
-                        val client = serverChannel.accept()
-                        logger.info("Новое подключение: ${client.remoteAddress}")
-                        client.configureBlocking(true)
-                        handleClient(client)
-                    }
-                }
+            buffer.clear()
+            val clientAddress = channel.receive(buffer) as? InetSocketAddress ?: continue
+
+            val clientKey = clientAddress.toString()
+            if (knownClients.add(clientKey)) {
+                logger.info("Новое подключение: $clientAddress")
             }
+
+            buffer.flip()
+            val bytes = ByteArray(buffer.remaining())
+            buffer.get(bytes)
+
+            val request = ObjectInputStream(ByteArrayInputStream(bytes)).use { it.readObject() as Request }
+
+            val loggable = commandManager.isLoggable(request.commandName)
+            if (loggable) logger.info("Получен запрос: ${request.commandName}")
+
+            val response = commandManager.execute(request).copy(
+                commands = commandManager.getCommandDescriptions(),
+                commandsRequiringDragon = commandManager.getCommandsRequiringDragon()
+            )
+
+            val baos = ByteArrayOutputStream()
+            ObjectOutputStream(baos).use { it.writeObject(response) }
+            val responseData = baos.toByteArray()
+
+            channel.send(ByteBuffer.wrap(responseData), clientAddress)
+
+            if (loggable) logger.info("Отправлен ответ на команду: ${request.commandName}")
         }
-    }
-
-    private fun handleClient(channel: SocketChannel) {
-        val socket = channel.socket()
-        val output = ObjectOutputStream(socket.getOutputStream())
-        output.flush()
-        val input = ObjectInputStream(socket.getInputStream())
-        val request = input.readObject() as Request
-        val loggable = commandManager.isLoggable(request.commandName)
-
-        if (loggable) logger.info("Получен запрос: ${request.commandName}")
-
-        val response = commandManager.execute(request)
-        val responseWithCommands = response.copy(
-            commands = commandManager.getCommandDescriptions(),
-            commandsRequiringDragon = commandManager.getCommandsRequiringDragon()
-        )
-        output.writeObject(responseWithCommands)
-
-        if (loggable) logger.info("Отправлен ответ на команду: ${request.commandName}")
-        socket.close()
     }
 }
