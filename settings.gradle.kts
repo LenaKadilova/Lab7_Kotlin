@@ -4,4 +4,4 @@ pluginManagement {
     }
 }
 rootProject.name = "Lab6_Kotlin"
-include("common", "client", "server")
+include("common", "client", "server", "gateway")

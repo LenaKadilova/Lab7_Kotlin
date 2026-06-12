@@ -5,7 +5,7 @@ import common.commands.ExitCommand
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 
-fun main() {
+fun main(args: Array<String>) {
     System.setOut(java.io.PrintStream(System.out, true, "UTF-8"))
     val logger = LoggerFactory.getLogger("server.Main")
 
@@ -46,6 +46,7 @@ fun main() {
     commandManager.addToList(ReplaceIfGreaterCommand(collectionManager))
     commandManager.addToList(ExitCommand())
 
-    val server = Server(commandManager, db)
+    val port = args.firstOrNull()?.toIntOrNull() ?: 12345
+    val server = Server(commandManager, db, port)
     server.start()
 }

@@ -13,28 +13,31 @@ import java.nio.channels.DatagramChannel
 import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 
-class Server(private val commandManager: CommandManager, private val db: DatabaseManager) {
+class Server(private val commandManager: CommandManager, private val db: DatabaseManager, private val port: Int = 12345) {
 
     private val logger = LoggerFactory.getLogger(Server::class.java)
-    private val knownClients = mutableSetOf<String>()
     private val forkJoinPool = ForkJoinPool.commonPool()
     private val fixedThreadPool = Executors.newFixedThreadPool(4)
+    private val gatewayAddress = InetSocketAddress("127.0.0.1", 12346)
+    private val registrationChannel = DatagramChannel.open().apply { configureBlocking(false) }
 
     fun start() {
         val channel = DatagramChannel.open()
-        channel.bind(InetSocketAddress(12345))
-        logger.info("Сервер запущен на порту 12345")
+        channel.bind(InetSocketAddress(port))
+        logger.info("Сервер запущен на порту $port")
+
+        registerAtGateway()
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            unregisterFromGateway()
+            logger.info("Сервер остановлен")
+        })
 
         val buffer = ByteBuffer.allocate(65535)
 
         while (true) {
             buffer.clear()
             val clientAddress = channel.receive(buffer) as? InetSocketAddress ?: continue
-
-            val clientKey = clientAddress.toString()
-            if (knownClients.add(clientKey)) {
-                logger.info("Новое подключение: $clientAddress")
-            }
 
             buffer.flip()
             val bytes = ByteArray(buffer.remaining())
@@ -64,14 +67,27 @@ class Server(private val commandManager: CommandManager, private val db: Databas
             return handleRegister(request)
         }
 
-        if (!db.authenticateUser(request.login, request.passwordHash)) {
-            return Response("Ошибка авторизации: неверный логин или пароль")
+        if (request.commandName == "login") {
+            return handleLogin(request)
         }
 
-        val loggable = commandManager.isLoggable(request.commandName)
-        if (loggable) logger.info("Получен запрос: ${request.commandName} от ${request.login}")
+        val login = if (request.token != null) {
+            db.validateToken(request.token!!) ?: return Response("Токен недействителен, войдите снова")
+        } else {
+            return Response("Необходима авторизация")
+        }
 
-        val response = commandManager.execute(request).copy(
+        val requestWithLogin = request.copy(login = login)
+
+        val loggable = commandManager.isLoggable(request.commandName)
+        if (loggable) logger.info("Получен запрос: ${request.commandName} от $login")
+
+        if (request.commandName == "exit") {
+            request.token.let { db.invalidateToken(it) }
+            return Response("До свидания!", exitClient = true)
+        }
+
+        val response = commandManager.execute(requestWithLogin).copy(
             commands = commandManager.getCommandDescriptions(),
             commandsRequiringDragon = commandManager.getCommandsRequiringDragon()
         )
@@ -80,13 +96,42 @@ class Server(private val commandManager: CommandManager, private val db: Databas
         return response
     }
 
-    private fun handleRegister(request: Request): Response {
-        val login = request.login
-        val passwordHash = request.passwordHash
-        if (login.isBlank() || passwordHash.isBlank()) {
+    private fun handleLogin(request: Request): Response {
+        if (request.login.isBlank() || request.passwordHash.isBlank()) {
             return Response("Логин и пароль не могут быть пустыми")
         }
-        val success = db.registerUser(login, passwordHash)
+        if (!db.authenticateUser(request.login, request.passwordHash)) {
+            return Response("Ошибка авторизации: неверный логин или пароль")
+        }
+        val token = db.createToken(request.login)
+        return Response("Вход выполнен", token = token)
+    }
+
+    private fun handleRegister(request: Request): Response {
+        if (request.login.isBlank() || request.passwordHash.isBlank()) {
+            return Response("Логин и пароль не могут быть пустыми")
+        }
+        val success = db.registerUser(request.login, request.passwordHash)
         return if (success) Response("Регистрация успешна") else Response("Пользователь с таким логином уже существует")
+    }
+
+    private fun registerAtGateway() {
+        try {
+            val message = "REGISTER:$port".toByteArray()
+            registrationChannel.send(ByteBuffer.wrap(message), gatewayAddress)
+            logger.info("Отправлена регистрация у gateway")
+        } catch (e: Exception) {
+            logger.warn("Не удалось зарегистрироваться у gateway: ${e.message}")
+        }
+    }
+
+    private fun unregisterFromGateway() {
+        try {
+            val message = "UNREGISTER:$port".toByteArray()
+            registrationChannel.send(ByteBuffer.wrap(message), gatewayAddress)
+            logger.info("Отправлена отмена регистрации у gateway")
+        } catch (e: Exception) {
+            logger.warn("Не удалось отменить регистрацию у gateway: ${e.message}")
+        }
     }
 }

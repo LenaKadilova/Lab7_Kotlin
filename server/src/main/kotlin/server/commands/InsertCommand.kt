@@ -16,16 +16,17 @@ class InsertCommand(private val collectionManager: CollectionManager) : Command 
 
     override fun execute(request: Request): Response {
         val key = request.argument?.toLongOrNull()
-            ?: return Response("Необходимо указать числовой ключ")
+            ?: return Response("Ошибка: необходимо указать числовой ключ")
 
         if (collectionManager.storage.containsKey(key)) {
-            return Response("Уже существует элемент с таким ключом")
+            return Response("Ошибка: уже существует элемент с таким ключом")
         }
 
-        val dragon = request.dragon
-            ?: return Response("Дракон не передан в запросе")
+        if (request.dragon == null) {
+            return Response("OK", needsDragon = true)
+        }
 
-        val result = collectionManager.insert(dragon, request.login)
+        val result = collectionManager.insert(request.dragon!!, request.login)
         return Response(result)
     }
 }

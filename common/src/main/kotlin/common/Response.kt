@@ -7,5 +7,7 @@ data class Response(
     val lines: List<String>? = null,
     val commands: Map<String, String> = emptyMap(),
     val commandsRequiringDragon: Set<String> = emptySet(),
-    val exitClient: Boolean = false
+    val exitClient: Boolean = false,
+    val token: String? = null,
+    val needsDragon: Boolean = false
 ) : Serializable

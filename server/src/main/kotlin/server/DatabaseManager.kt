@@ -46,6 +46,13 @@ class DatabaseManager {
                         owner VARCHAR(255) NOT NULL REFERENCES users(login)
                     )
                 """)
+                stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS tokens (
+                        token VARCHAR(64) PRIMARY KEY,
+                        login VARCHAR(255) NOT NULL REFERENCES users(login),
+                        last_active TIMESTAMP NOT NULL
+                    )
+                """)
             }
         }
     }
@@ -192,6 +199,61 @@ class DatabaseManager {
             conn.prepareStatement("DELETE FROM dragons WHERE owner=?").use { stmt ->
                 stmt.setString(1, owner)
                 return stmt.executeUpdate()
+            }
+        }
+    }
+    fun createToken(login: String): String {
+        val token = java.util.UUID.randomUUID().toString().replace("-", "")
+        connect().use { conn ->
+            conn.prepareStatement(
+                "INSERT INTO tokens (token, login, last_active) VALUES (?, ?, ?) ON CONFLICT (token) DO UPDATE SET last_active = EXCLUDED.last_active"
+            ).use { stmt ->
+                stmt.setString(1, token)
+                stmt.setString(2, login)
+                stmt.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()))
+                stmt.executeUpdate()
+            }
+        }
+        return token
+    }
+
+    fun validateToken(token: String): String? {
+        connect().use { conn ->
+            conn.prepareStatement(
+                "SELECT login, last_active FROM tokens WHERE token = ?"
+            ).use { stmt ->
+                stmt.setString(1, token)
+                val rs = stmt.executeQuery()
+                if (!rs.next()) return null
+                val lastActive = rs.getTimestamp("last_active").toLocalDateTime()
+                if (lastActive.isBefore(LocalDateTime.now().minusMinutes(30))) {
+                    invalidateToken(token)
+                    return null
+                }
+                val login = rs.getString("login")
+                updateTokenActivity(token)
+                return login
+            }
+        }
+    }
+
+    fun updateTokenActivity(token: String) {
+        connect().use { conn ->
+            conn.prepareStatement(
+                "UPDATE tokens SET last_active = ? WHERE token = ?"
+            ).use { stmt ->
+                stmt.setTimestamp(1, java.sql.Timestamp.valueOf(LocalDateTime.now()))
+                stmt.setString(2, token)
+                stmt.executeUpdate()
+            }
+        }
+    }
+
+    fun invalidateToken(token: String?) {
+        connect().use { conn ->
+            conn.prepareStatement("DELETE FROM tokens WHERE token = ?").use { stmt ->
+                stmt.setString(1, token)
+                stmt.executeUpdate()
             }
         }
     }

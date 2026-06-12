@@ -5,12 +5,12 @@ import common.Request
 fun main() {
     System.setOut(java.io.PrintStream(System.out, true, "UTF-8"))
     val io = IOManager()
-    val client = Client("192.168.10.80", 12345, io)
+    val client = Client("192.168.10.80", 12344, io)
     val executingScripts = mutableSetOf<String>()
     val commandsRequiringDragon = mutableSetOf<String>()
 
+    var token: String
     var login: String
-    var passwordHash: String
 
     while (true) {
         io.println("Введите 'login' для входа или 'register' для регистрации:")
@@ -22,15 +22,20 @@ fun main() {
                 login = io.readLine().trim()
                 io.println("Пароль:")
                 val password = io.readLine().trim()
-                passwordHash = client.hashPassword(password)
+                val passwordHash = client.hashPassword(password)
 
-                val response = client.send(Request("help", null, null, login, passwordHash))
-                if (response == null || response.message.startsWith("Ошибка авторизации")) {
-                    io.println("Неверный логин или пароль")
+                val response = client.send(Request("login", null, null, login, passwordHash))
+                if (response == null || response.token == null) {
+                    io.println(response?.message ?: "Сервер недоступен")
                     continue
                 }
-                io.println("Вход выполнен")
-                commandsRequiringDragon.addAll(response.commandsRequiringDragon)
+                token = response.token.toString()
+                io.println(response.message)
+
+                val helpResponse = client.send(Request("help", null, null, token = token))
+                if (helpResponse != null) {
+                    commandsRequiringDragon.addAll(helpResponse.commandsRequiringDragon)
+                }
                 break
             }
             "register" -> {
@@ -38,15 +43,15 @@ fun main() {
                 login = io.readLine().trim()
                 io.println("Пароль:")
                 val password = io.readLine().trim()
-                passwordHash = client.hashPassword(password)
+                val passwordHash = client.hashPassword(password)
 
                 val response = client.send(Request("register", null, null, login, passwordHash))
-                if (response == null || response.message.startsWith("Пользователь с таким")) {
-                    io.println(response?.message ?: "Сервер недоступен")
+                if (response == null) {
+                    io.println("Сервер недоступен")
                     continue
                 }
                 io.println(response.message)
-                break
+                if (response.message == "Регистрация успешна") continue
             }
             else -> io.println("Неверная команда")
         }
@@ -88,9 +93,18 @@ fun main() {
         }
 
         val dragon = if (commandName in commandsRequiringDragon) {
-            val key = argument?.toLongOrNull()
-            if (key == null) {
-                io.println("Необходимо указать числовой ключ")
+            val checkResponse = client.send(Request(commandName, argument, null, token = token))
+            if (checkResponse == null) {
+                io.println("Сервер недоступен")
+                continue
+            }
+            if (checkResponse.message.startsWith("Ошибка") || checkResponse.message.startsWith("Нет прав")) {
+                io.println(checkResponse.message)
+                continue
+            }
+            if (!checkResponse.needsDragon) {
+                io.println(checkResponse.message)
+                checkResponse.lines?.forEach { io.println(it) }
                 continue
             }
             io.createDragon(0)
@@ -98,7 +112,7 @@ fun main() {
             null
         }
 
-        val response = client.send(Request(commandName, argument, dragon, login, passwordHash))
+        val response = client.send(Request(commandName, argument, dragon, token = token))
 
         if (response != null) {
             commandsRequiringDragon.clear()
