@@ -26,7 +26,7 @@ class RemoveKeyCommand(private val collectionManager: CollectionManager) : Comma
             return Response("Ключ должен быть числом")
         }
 
-        collectionManager.removeByKey(key)
-        return Response("Элемент удалён")
+        val result = collectionManager.removeByKey(key, request.login)
+        return Response(result)
     }
 }

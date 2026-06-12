@@ -14,14 +14,6 @@ class SaveCommand(private val collectionManager: CollectionManager) : Command {
     override val description = "сохранить коллекцию в файл"
 
     override fun execute(request: Request): Response {
-        val args = request.argument?.split(" ") ?: emptyList()
-
-        if (args.isEmpty()) {
-            return Response("Ошибка: нужно указать имя файла")
-        }
-
-        val fileName = args[0]
-        collectionManager.save(fileName)
-        return Response("Коллекция сохранена")
+        return Response("Команда save недоступна клиенту")
     }
 }

@@ -27,7 +27,8 @@ data class Dragon(
     var weight: Double, // >0
     var type: DragonType, // не null
     var character: DragonCharacter, // не null
-    var head: DragonHead?
+    val head: DragonHead?,
+    var owner: String = ""
 ) : Comparable<Dragon>, Serializable {
     /**
      * Сравнивает драконов по id.

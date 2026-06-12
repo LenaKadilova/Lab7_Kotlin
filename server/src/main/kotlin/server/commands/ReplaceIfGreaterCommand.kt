@@ -30,8 +30,7 @@ class ReplaceIfGreaterCommand(private val collectionManager: CollectionManager) 
         val value = args[2].toDoubleOrNull()
             ?: return Response("Значение должно быть числом")
 
-        val result = collectionManager.replaceIfGreater(key, param, value)
-
+        val result = collectionManager.replaceIfGreater(key, param, value, request.login)
         return Response(result)
     }
 }

@@ -23,7 +23,7 @@ class RemoveGreaterKeyCommand(private val collectionManager: CollectionManager) 
             return Response("Ключ должен быть числом")
         }
 
-        collectionManager.removeGreaterKey(key)
-        return Response("Элементы удалены")
+        val result = collectionManager.removeGreaterKey(key, request.login)
+        return Response(result)
     }
 }

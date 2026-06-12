@@ -15,6 +15,6 @@ class ShowCommand(private val collectionManager: CollectionManager) : Command {
     override val description = "вывести все элементы коллекции"
 
     override fun execute(request: Request): Response {
-        return Response("Коллекция:", lines = collectionManager.ShowAll())
+        return Response("Коллекция:", lines = collectionManager.showAll())
     }
 }

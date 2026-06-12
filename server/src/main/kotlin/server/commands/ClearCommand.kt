@@ -15,7 +15,7 @@ class ClearCommand(private val collectionManager: CollectionManager) : Command {
     override val description = "очистить коллекцию"
 
     override fun execute(request: Request): Response {
-        collectionManager.clear()
-        return Response("Коллекция очищена")
+        val result = collectionManager.clear(request.login)
+        return Response(result)
     }
 }

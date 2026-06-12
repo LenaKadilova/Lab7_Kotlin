@@ -25,8 +25,7 @@ class InsertCommand(private val collectionManager: CollectionManager) : Command 
         val dragon = request.dragon
             ?: return Response("Дракон не передан в запросе")
 
-        val id = collectionManager.nextId()
-        collectionManager.storage[key] = dragon.copy(id = id)
-        return Response("Дракон добавлен")
+        val result = collectionManager.insert(dragon, request.login)
+        return Response(result)
     }
 }

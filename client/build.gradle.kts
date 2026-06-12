@@ -23,3 +23,11 @@ tasks.register<JavaExec>("runClient") {
     environment("JAVA_TOOL_OPTIONS", "")
     jvmArgs = listOf("-Dfile.encoding=UTF-8", "-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", "-Dstdin.encoding=UTF-8")
 }
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "client.MainKt"
+    }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

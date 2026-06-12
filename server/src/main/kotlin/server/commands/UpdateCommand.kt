@@ -32,8 +32,8 @@ class UpdateCommand(private val collectionManager: CollectionManager) : Command 
             ?: return Response("Дракон не передан в запросе")
 
         return try {
-            collectionManager.updateById(id, dragon)
-            Response("Элемент обновлён")
+            val result = collectionManager.updateById(id, dragon, request.login)
+            Response(result)
         } catch (e: ValidationException) {
             Response("Ошибка: ${e.message}")
         }

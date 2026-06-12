@@ -46,6 +46,11 @@ class Client(private val host: String, private val port: Int, private val io: IO
         }
     }
 
+    fun hashPassword(password: String): String {
+        val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
     fun close() {
         channel.close()
     }

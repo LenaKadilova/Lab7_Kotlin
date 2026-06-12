@@ -26,8 +26,7 @@ class RemoveGreaterCommand(private val collectionManager: CollectionManager) : C
         val value = args[1].toDoubleOrNull()
             ?: return Response("Значение должно быть числом")
 
-        val result = collectionManager.removeGreater(param, value)
-
+        val result = collectionManager.removeGreater(param, value, request.login)
         return Response(result)
     }
 }
