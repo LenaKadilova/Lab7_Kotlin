@@ -16,8 +16,19 @@ class PrintAscendingCommand(private val collectionManager: CollectionManager) : 
 
     override fun execute(request: Request): Response {
         val param = request.argument ?: return Response("Укажите параметр сортировки")
-        val result = collectionManager.printAscending(param)
-        if (result.firstOrNull() == "Неверный параметр") return Response("Неверный параметр")
-        return Response("Отсортированная коллекция:", lines = result)
+        val dragons = collectionManager.loadFromDatabaseFresh().values
+        if (dragons.isEmpty()) return Response("Элементы не найдены")
+        val sorted = when (param) {
+            "id" -> dragons.sortedBy { it.id }
+            "x" -> dragons.sortedBy { it.coordinates.x }
+            "y" -> dragons.sortedBy { it.coordinates.y }
+            "creationDate" -> dragons.sortedBy { it.creationDate }
+            "age" -> dragons.sortedBy { it.age }
+            "weight" -> dragons.sortedBy { it.weight }
+            "eyesCount" -> dragons.sortedBy { it.head?.eyesCount }
+            "toothCount" -> dragons.sortedBy { it.head?.toothCount }
+            else -> return Response("Неверный параметр")
+        }
+        return Response("Отсортированная коллекция:", lines = sorted.map { it.toString() })
     }
 }

@@ -15,6 +15,9 @@ class ShowCommand(private val collectionManager: CollectionManager) : Command {
     override val description = "вывести все элементы коллекции"
 
     override fun execute(request: Request): Response {
-        return Response("Коллекция:", lines = collectionManager.showAll())
+        val dragons = collectionManager.loadFromDatabaseFresh()
+        if (dragons.isEmpty()) return Response("Коллекция пустая")
+        val lines = dragons.entries.flatMap { listOf("Ключ = ${it.key}", "Значение = ${it.value}") }
+        return Response("Коллекция:", lines = lines)
     }
 }

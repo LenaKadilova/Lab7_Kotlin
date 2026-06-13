@@ -15,6 +15,7 @@ class GroupCountingByIdCommand(private val collectionManager: CollectionManager)
     override val description = "сгруппировать элементы по id"
 
     override fun execute(request: Request): Response {
-        return Response("Группировка:", lines = collectionManager.groupCountingById())
+        val grouped = collectionManager.loadFromDatabaseFresh().values.groupingBy { it.id }.eachCount()
+        return Response("Группировка:", lines = if (grouped.isEmpty()) listOf("Коллекция пуста") else grouped.map { (id, count) -> "ID: $id -> количество: $count" })
     }
 }

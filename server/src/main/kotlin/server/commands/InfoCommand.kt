@@ -14,11 +14,12 @@ class InfoCommand(private val collectionManager: CollectionManager) : Command {
     override val description = "вывести информацию о коллекции (тип, дата инициализации, количество элементов, файл)"
 
     override fun execute(request: Request): Response {
+        val size = collectionManager.loadFromDatabaseFresh().size
         val text = """
-            Тип коллекции: java.util.Hashtable
-            Дата инициализации: ${collectionManager.time}
-            Количество элементов: ${collectionManager.size()}
-        """.trimIndent()
+        Тип коллекции: java.util.Hashtable
+        Дата инициализации: ${collectionManager.time}
+        Количество элементов: $size
+    """.trimIndent()
         return Response(text)
     }
 }

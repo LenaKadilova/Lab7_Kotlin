@@ -19,6 +19,8 @@ class CollectionManager(val time: LocalDateTime, val db: DatabaseManager) {
         storage.putAll(dragons)
     }
 
+    fun loadFromDatabaseFresh(): Map<Long, Dragon> = db.loadDragons()
+
     /**
      * Возвращает количество элементов в коллекции.
      * @return размер коллекции

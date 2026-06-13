@@ -15,12 +15,9 @@ class FilterStartsWithNameCommand(private val collectionManager: CollectionManag
 
     override fun execute(request: Request): Response {
         val args = request.argument?.split(" ") ?: emptyList()
-
-        if (args.isEmpty()) {
-            return Response("Введите строку")
-        }
-
+        if (args.isEmpty()) return Response("Введите строку")
         val prefix = args[0]
-        return Response("Результат:", lines = collectionManager.filterStartsWithName(prefix))
+        val filtered = collectionManager.loadFromDatabaseFresh().values.filter { it.name.startsWith(prefix) }
+        return Response("Результат:", lines = if (filtered.isEmpty()) listOf("Элементы не найдены") else filtered.map { it.toString() })
     }
 }
