@@ -18,7 +18,7 @@ class Server(private val commandManager: CommandManager, private val db: Databas
     private val logger = LoggerFactory.getLogger(Server::class.java)
     private val forkJoinPool = ForkJoinPool.commonPool()
     private val fixedThreadPool = Executors.newFixedThreadPool(4)
-    private val gatewayAddress = InetSocketAddress("127.0.0.1", 12346)
+    private var gatewayAddress = InetSocketAddress("127.0.0.1", 12346)
     private val registrationChannel = DatagramChannel.open().apply { configureBlocking(false) }
 
     fun start() {
@@ -115,9 +115,10 @@ class Server(private val commandManager: CommandManager, private val db: Databas
         return if (success) Response("Регистрация успешна") else Response("Пользователь с таким логином уже существует")
     }
 
-    private fun registerAtGateway() {
+    fun registerAtGateway(host: String = "127.0.0.1", port: Int = 12346) {
+        gatewayAddress = InetSocketAddress(host, port)
         try {
-            val message = "REGISTER:$port".toByteArray()
+            val message = "REGISTER:${this.port}".toByteArray()
             registrationChannel.send(ByteBuffer.wrap(message), gatewayAddress)
             logger.info("Отправлена регистрация у gateway")
         } catch (e: Exception) {
